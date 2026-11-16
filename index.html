@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Mondrian Puzzle</title>
+<style>
+:root{--bg:#f4f1ea;--ink:#111;--tray:#d9d6cf;--stud:#bdb9b0;--brd:#8d8a84;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b1b;--ink:#f4f1ea;--tray:#3a3a3a;--stud:#2b2b2b;--brd:#555}}
+*{box-sizing:border-box;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Helvetica,Arial,sans-serif;touch-action:pan-y}html{height:100%;overflow-y:auto}
+body{display:flex;flex-direction:column;align-items:center;padding:12px;min-height:100%}
+.top{width:min(92vw,400px);display:flex;align-items:center;justify-content:space-between;border-bottom:5px solid #111;padding-bottom:8px;margin-bottom:12px}
+h1{margin:0;font-size:18px;letter-spacing:2px;text-transform:uppercase;line-height:1}
+.nav{display:flex;align-items:center;gap:6px;font-weight:bold;font-size:14px}
+button{background:#d40920;color:#fff;border:3px solid #111;font-size:16px;padding:6px 12px;font-weight:bold;text-transform:uppercase}
+.nav button{padding:4px 10px}
+#frame{width:min(92vw,400px);aspect-ratio:1;background:var(--tray);border:6px solid var(--brd);flex:none}
+#board{position:relative;width:100%;height:100%;background-image:radial-gradient(circle,var(--stud) 36%,transparent 38%);background-size:12.5% 12.5%}
+.p{touch-action:none;position:absolute;border:3px solid #111;border-radius:2px}
+#tray .p{position:relative;flex:none}
+.fx::after{content:'';position:absolute;left:50%;top:50%;width:9px;height:9px;margin:-5px;border-radius:50%;background:#fff;border:2px solid #111}
+#gh{position:absolute;display:none;border:3px dashed #1a9;background:rgba(30,170,150,.25);pointer-events:none}
+#gh.bad{border-color:#d40920;background:rgba(212,9,32,.25)}
+#tray{width:min(92vw,400px);flex:1;min-height:110px;display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-content:center;align-items:center;padding-top:8px}
+.chips{width:min(92vw,400px);display:flex;gap:5px;margin-bottom:8px}.chips button{flex:1;padding:5px 0;font-size:13px;background:var(--bg);color:var(--ink);border:3px solid #111}.chips button.on{background:#f9d71c;color:#111}.info{width:min(92vw,400px);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:bold;margin-bottom:8px}.info .mid{flex:1;text-align:center;line-height:1.5}.info button{padding:4px 10px}
+#help{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:30;padding:14px}#help .hp{background:#fff;color:#111;border:6px solid #111;padding:16px 18px;max-width:420px;max-height:88vh;overflow-y:auto;touch-action:pan-y;font-size:14px;line-height:1.45}#help h2{margin:0 0 6px;text-transform:uppercase;letter-spacing:2px;font-size:18px}#help h3{margin:12px 0 4px;font-size:14px;text-transform:uppercase}#help p,#help ul{margin:0 0 4px}#help ul{padding-left:18px}
+.rb{margin-top:6px;padding:4px 12px;font-size:12px;background:var(--bg);color:var(--ink);border:3px solid #111}
+.modes{width:min(92vw,400px);display:flex;gap:5px;margin-bottom:8px}.modes button{flex:1;padding:5px 0;font-size:13px;background:var(--bg);color:var(--ink);border:3px solid #111}.modes button.on{background:#1356a2;color:#fff}.zero{background:#d40920;color:#fff;padding:1px 6px}#over p{margin:10px 0 0;max-width:260px}#over button{margin:14px 4px 0}
+.chips button small{font-size:10px;font-weight:normal}.p{cursor:grab}.fx{cursor:default}
+.top{flex-wrap:wrap;gap:6px}.top h1{font-size:16px}.tb{display:flex;gap:6px}.top button{font-size:12px;padding:5px 9px}
+#sol{position:relative;overflow:hidden;background:#111;color:#fff;touch-action:none;width:min(92vw,400px);margin:0 0 8px;padding:6px;font-size:13px}#solbar{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.4)}#sollb{position:relative}
+#sv{position:absolute;inset:0;pointer-events:none;z-index:5}#sv div{position:absolute;border:4px solid #111;box-shadow:inset 0 0 0 2px #fff}
+.hint{font-size:12px;opacity:.7;text-align:center;width:min(92vw,400px);margin-top:6px}
+#fl{position:fixed;z-index:9;pointer-events:none;display:none;opacity:.92}
+#over{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:20}
+#over div{background:#fff;color:#111;border:6px solid #111;padding:24px 28px;text-align:center}
+#over h2{margin:0;text-transform:uppercase;letter-spacing:2px}
+</style></head><body>
+<div class="top"><h1>Mondrian Puzzle</h1><div class="tb"><button id="hb" style="background:#1356a2">📖 Instrucciones</button></div></div>
+<div class="modes"><button id="nb">🎯 Juego normal</button><button id="rb2">🎲 Al azar</button><button id="fb2">✋ Uso libre</button></div>
+<div class="chips" id="chips"></div>
+<div class="info"><button id="pv">◀</button><div class="mid"><div id="lv"></div><div id="st"></div></div><button id="nx">▶</button><button id="rs" style="background:#1356a2">↺</button></div>
+<button id="sol" title="Mantén presionado 3 segundos"><span id="solbar"></span><span id="sollb">👁 Solución (mantén 3 segundos)</span></button>
+<div id="frame"><div id="board"><div id="gh"></div></div></div>
+<div id="tray"></div>
+<button class="rb" id="rb">Reiniciar retos (quitar ✓)</button>
+<div id="help"><div class="hp"><h2>Instrucciones</h2>
+<h3>Cómo jugar</h3><p>Llena por completo el tablero de 8×8 con las 8 piezas de colores, sin huecos ni encimadas. Las 3 piezas negras (marcadas con un punto) ya están puestas y no se mueven.</p>
+<ul><li>Arrastra una pieza del área de abajo hasta el tablero.</li><li>Toca una pieza de abajo para girarla.</li><li>Toca una pieza del tablero para quitarla.</li><li>Mantén presionado 3 segundos el botón <b>👁 Solución</b> (arriba del tablero) para ver, solo con contornos, una forma de resolver el tablero. Si lo sueltas antes, no pasa nada.</li></ul>
+<h3>Tipos de juego</h3>
+<ul><li><b>🎯 Juego normal:</b> 250 retos, cada uno con las piezas negras en un lugar distinto. Elige la dificultad con las estrellas (1★ a 5★). Con ◀ ▶ cambias de reto, con ↺ lo reinicias, y se marca ✓ al resolverlo.</li>
+<li><b>🎲 Al azar:</b> crea un juego nuevo con las piezas negras en lugares al azar. Solo muestra juegos que sí tienen solución. ▶ crea otro y ◀ regresa al anterior.</li>
+<li><b>✋ Uso libre:</b> tú mueves las piezas negras (arrastrándolas) y las giras (tocándolas), y el juego calcula cuántas soluciones tiene el tablero. Si salen 0, te avisa en rojo. ◀ ▶ cargan las negras del reto anterior o siguiente. Al resolverlo puedes seguir o limpiar el tablero (las negras se quedan).</li></ul>
+<h3>Atajos de teclado (computadora)</h3><p>← → cambian de reto · R reinicia · S (mantenida 3 segundos) muestra la solución · Esc cierra las ventanas.</p>
+<h3>¿Por qué unos retos son más difíciles?</h3><p>Las estrellas miden cuánto ensayo y error necesita un jugador que prueba piezas al azar (promedio de 24 intentos) antes de dar con una solución. Más estrellas = más callejones sin salida. No depende del número de soluciones, que se muestra aparte (hasta 3000+).</p>
+<div style="text-align:center"><button id="hc">Cerrar</button></div></div></div>
+<div id="fl"></div>
+<div id="over"><div><h2 id="oh"></h2><p id="ot"></p><button id="o1"></button><button id="o2" style="background:#1356a2"></button></div></div>
+<script>
+const N=8,C={y:'#f9d71c',r:'#d40920',b:'#1356a2',w:'#fff',k:'#111'},CAP=3000;
+const SET=[['y',3,4],['y',2,5],['w',3,3],['w',2,3],['b',2,4],['b',1,4],['r',2,2],['r',1,5],['k',1,3],['k',1,2],['k',1,1]];
+// [estrellas, soluciones, negra1, negra2, negra3]; cada negra = [x,y,w,h]
+const LV=[[1,19,[4,1,3,1],[5,0,2,1],[0,0,1,1]],[1,16,[3,0,1,3],[5,4,2,1],[4,2,1,1]],[1,66,[0,0,3,1],[6,0,2,1],[0,3,1,1]],[1,7,[3,4,3,1],[2,0,1,2],[3,1,1,1]],[1,12,[3,3,3,1],[5,1,1,2],[3,0,1,1]],[1,6,[0,0,3,1],[2,3,2,1],[4,1,1,1]],[1,2,[4,1,1,3],[2,1,2,1],[6,0,1,1]],[1,1,[0,1,3,1],[4,5,2,1],[7,0,1,1]],[1,1,[1,0,3,1],[7,1,1,2],[5,3,1,1]],[1,65,[4,0,3,1],[2,0,2,1],[7,4,1,1]],[1,3,[3,0,1,3],[4,2,2,1],[2,2,1,1]],[1,41,[0,5,3,1],[1,0,2,1],[0,4,1,1]],[1,1,[0,2,3,1],[2,5,2,1],[6,0,1,1]],[1,12,[0,5,1,3],[6,2,2,1],[4,0,1,1]],[1,740,[5,0,3,1],[7,2,1,2],[7,1,1,1]],[1,111,[0,2,3,1],[2,0,1,2],[3,2,1,1]],[1,53,[2,0,1,3],[3,2,2,1],[7,3,1,1]],[1,44,[5,2,1,3],[2,0,1,2],[0,2,1,1]],[1,16,[3,3,3,1],[6,3,2,1],[2,0,1,1]],[1,16,[0,3,3,1],[7,0,1,2],[6,1,1,1]],[1,6,[2,2,1,3],[6,3,2,1],[2,0,1,1]],[1,3,[5,1,3,1],[0,4,1,2],[4,3,1,1]],[1,75,[0,2,3,1],[5,0,1,2],[7,2,1,1]],[1,47,[5,7,3,1],[5,1,1,2],[7,0,1,1]],[1,65,[2,0,3,1],[4,1,1,2],[7,3,1,1]],[1,73,[5,0,3,1],[3,2,2,1],[2,2,1,1]],[1,6,[4,0,3,1],[7,4,1,2],[4,4,1,1]],[1,34,[5,7,3,1],[2,1,2,1],[2,0,1,1]],[1,83,[5,0,3,1],[4,0,1,2],[5,1,1,1]],[1,6,[0,3,3,1],[7,0,1,2],[5,3,1,1]],[1,1,[1,0,3,1],[3,5,2,1],[4,2,1,1]],[1,26,[2,0,1,3],[7,2,1,2],[7,1,1,1]],[1,81,[4,0,3,1],[0,3,2,1],[7,0,1,1]],[1,4,[6,0,1,3],[0,0,2,1],[4,3,1,1]],[1,47,[4,0,1,3],[0,2,1,2],[1,2,1,1]],[1,6,[0,4,3,1],[3,1,2,1],[3,4,1,1]],[1,97,[0,2,3,1],[4,2,1,2],[3,2,1,1]],[1,101,[0,4,3,1],[0,0,2,1],[7,0,1,1]],[1,94,[4,3,3,1],[4,4,1,2],[7,3,1,1]],[1,94,[1,2,1,3],[1,0,1,2],[2,4,1,1]],[1,1,[5,3,3,1],[0,0,1,2],[4,0,1,1]],[1,6,[7,0,1,3],[2,3,2,1],[2,0,1,1]],[1,84,[7,0,1,3],[5,0,2,1],[0,2,1,1]],[1,9,[0,3,3,1],[6,2,2,1],[3,6,1,1]],[1,2,[1,0,3,1],[3,5,2,1],[5,3,1,1]],[1,2,[2,5,3,1],[0,2,2,1],[7,1,1,1]],[1,16,[0,1,1,3],[6,7,2,1],[0,4,1,1]],[1,8,[4,3,3,1],[0,2,2,1],[2,2,1,1]],[1,76,[7,0,1,3],[3,3,1,2],[0,7,1,1]],[1,7,[5,4,3,1],[1,5,2,1],[0,1,1,1]],[2,54,[0,2,3,1],[4,5,1,2],[4,7,1,1]],[2,8,[3,0,1,3],[5,5,2,1],[7,0,1,1]],[2,36,[7,0,1,3],[6,3,2,1],[4,3,1,1]],[2,106,[0,0,1,3],[5,3,2,1],[4,3,1,1]],[2,101,[0,7,3,1],[5,0,1,2],[7,2,1,1]],[2,33,[4,1,1,3],[7,6,1,2],[3,3,1,1]],[2,44,[0,2,1,3],[5,4,2,1],[0,5,1,1]],[2,16,[2,3,3,1],[6,7,2,1],[4,2,1,1]],[2,2,[3,4,3,1],[4,2,1,2],[7,2,1,1]],[2,26,[3,5,3,1],[6,0,1,2],[7,0,1,1]],[2,61,[5,5,1,3],[0,3,2,1],[5,4,1,1]],[2,47,[7,5,1,3],[6,2,2,1],[0,0,1,1]],[2,26,[4,0,1,3],[6,2,1,2],[5,2,1,1]],[2,95,[5,0,3,1],[5,1,1,2],[3,3,1,1]],[2,2,[3,3,1,3],[4,0,2,1],[3,0,1,1]],[2,19,[2,1,1,3],[6,7,2,1],[0,7,1,1]],[2,1,[5,0,1,3],[2,4,1,2],[7,2,1,1]],[2,64,[3,4,1,3],[3,1,1,2],[3,3,1,1]],[2,85,[5,4,3,1],[7,2,1,2],[0,7,1,1]],[2,2,[5,1,3,1],[2,6,1,2],[3,5,1,1]],[2,36,[0,1,1,3],[7,1,1,2],[7,0,1,1]],[2,6,[1,2,1,3],[7,2,1,2],[0,4,1,1]],[2,7,[3,0,1,3],[7,4,1,2],[2,4,1,1]],[2,1,[4,2,3,1],[2,0,1,2],[4,3,1,1]],[2,18,[0,2,3,1],[5,6,1,2],[7,2,1,1]],[2,29,[0,0,1,3],[1,4,2,1],[0,4,1,1]],[2,2,[5,2,3,1],[2,5,2,1],[3,2,1,1]],[2,2,[3,2,1,3],[6,0,2,1],[4,2,1,1]],[2,6,[4,0,1,3],[1,4,1,2],[0,3,1,1]],[2,64,[4,4,3,1],[2,4,2,1],[1,4,1,1]],[2,2,[0,1,1,3],[7,3,1,2],[5,5,1,1]],[2,104,[0,4,1,3],[6,0,2,1],[5,0,1,1]],[2,1,[0,2,3,1],[4,5,2,1],[3,0,1,1]],[2,1,[1,0,1,3],[4,6,1,2],[2,2,1,1]],[2,4,[2,7,3,1],[0,1,1,2],[7,3,1,1]],[2,17,[0,5,1,3],[6,2,2,1],[2,0,1,1]],[2,37,[7,0,1,3],[4,2,2,1],[7,3,1,1]],[2,107,[7,3,1,3],[7,6,1,2],[4,3,1,1]],[2,10,[6,2,1,3],[1,2,2,1],[0,2,1,1]],[2,61,[0,5,1,3],[6,7,2,1],[1,0,1,1]],[2,25,[2,2,3,1],[2,0,1,2],[4,3,1,1]],[2,2,[0,0,3,1],[2,1,2,1],[7,5,1,1]],[2,17,[7,5,1,3],[5,0,2,1],[6,3,1,1]],[2,1,[2,2,3,1],[0,5,2,1],[5,4,1,1]],[2,6,[0,5,3,1],[3,5,2,1],[4,2,1,1]],[2,8,[5,4,3,1],[1,0,2,1],[0,5,1,1]],[2,6,[5,5,1,3],[7,0,1,2],[4,1,1,1]],[2,25,[2,4,3,1],[0,7,2,1],[2,3,1,1]],[2,1,[7,5,1,3],[2,2,1,2],[3,0,1,1]],[2,2,[5,2,3,1],[7,5,1,2],[4,0,1,1]],[3,10,[3,2,3,1],[2,6,1,2],[3,6,1,1]],[3,1,[5,4,3,1],[4,0,1,2],[7,2,1,1]],[3,16,[6,0,1,3],[7,0,1,2],[0,0,1,1]],[3,1,[3,4,3,1],[4,5,1,2],[3,1,1,1]],[3,7,[3,5,3,1],[3,3,2,1],[0,4,1,1]],[3,1,[5,7,3,1],[1,0,1,2],[2,4,1,1]],[3,1,[2,1,3,1],[4,2,1,2],[3,6,1,1]],[3,6,[3,7,3,1],[5,1,1,2],[0,4,1,1]],[3,3,[3,4,3,1],[0,7,2,1],[3,2,1,1]],[3,64,[0,5,3,1],[4,6,1,2],[7,0,1,1]],[3,6,[1,4,3,1],[4,2,2,1],[3,5,1,1]],[3,15,[3,0,1,3],[0,4,1,2],[0,6,1,1]],[3,44,[5,2,1,3],[6,4,2,1],[0,5,1,1]],[3,65,[4,7,3,1],[7,2,1,2],[3,7,1,1]],[3,72,[0,0,3,1],[7,3,1,2],[7,0,1,1]],[3,152,[0,0,1,3],[3,3,1,2],[3,5,1,1]],[3,2,[3,3,1,3],[7,2,1,2],[2,3,1,1]],[3,33,[3,0,3,1],[7,6,1,2],[6,6,1,1]],[3,25,[7,0,1,3],[5,7,2,1],[2,0,1,1]],[3,1,[4,5,3,1],[5,4,2,1],[4,1,1,1]],[3,2,[2,3,1,3],[6,4,1,2],[3,0,1,1]],[3,65,[4,5,1,3],[2,7,2,1],[0,0,1,1]],[3,2,[0,3,3,1],[4,2,1,2],[4,4,1,1]],[3,4,[2,1,1,3],[2,0,2,1],[5,4,1,1]],[3,7,[3,1,1,3],[6,5,2,1],[0,7,1,1]],[3,15,[4,7,3,1],[6,0,1,2],[7,7,1,1]],[3,7,[0,4,3,1],[0,6,1,2],[3,2,1,1]],[3,1,[1,3,3,1],[4,0,1,2],[2,7,1,1]],[3,40,[0,0,1,3],[0,3,1,2],[5,3,1,1]],[3,10,[5,0,1,3],[4,7,2,1],[0,0,1,1]],[3,1,[2,0,1,3],[1,3,2,1],[6,5,1,1]],[3,68,[0,7,3,1],[0,0,1,2],[3,4,1,1]],[3,1,[5,2,3,1],[4,3,2,1],[6,7,1,1]],[3,25,[3,2,1,3],[4,7,2,1],[5,6,1,1]],[3,1,[1,3,1,3],[2,0,1,2],[1,2,1,1]],[3,25,[0,5,3,1],[3,0,2,1],[2,0,1,1]],[3,2,[4,5,3,1],[3,2,2,1],[6,4,1,1]],[3,2,[7,3,1,3],[2,0,2,1],[0,6,1,1]],[3,84,[0,0,3,1],[3,7,2,1],[7,0,1,1]],[3,65,[2,7,3,1],[4,5,1,2],[0,0,1,1]],[3,1,[3,0,1,3],[0,0,2,1],[3,6,1,1]],[3,1,[5,0,3,1],[5,3,2,1],[4,4,1,1]],[3,6,[4,3,3,1],[2,7,2,1],[2,4,1,1]],[3,38,[0,7,3,1],[1,6,2,1],[1,2,1,1]],[3,12,[5,7,3,1],[2,2,1,2],[3,6,1,1]],[3,16,[0,4,3,1],[6,3,2,1],[3,7,1,1]],[3,16,[4,2,1,3],[0,7,2,1],[3,4,1,1]],[3,1,[6,5,1,3],[4,0,2,1],[1,3,1,1]],[3,2,[0,0,1,3],[3,5,2,1],[3,2,1,1]],[3,102,[0,7,3,1],[7,6,1,2],[3,0,1,1]],[4,6,[2,7,3,1],[5,2,1,2],[4,2,1,1]],[4,65,[5,5,3,1],[7,6,1,2],[4,2,1,1]],[4,1,[2,2,3,1],[2,5,2,1],[7,7,1,1]],[4,4,[4,5,3,1],[3,0,2,1],[7,7,1,1]],[4,65,[0,3,1,3],[4,7,2,1],[0,6,1,1]],[4,12,[0,0,3,1],[5,6,1,2],[7,3,1,1]],[4,1,[3,2,1,3],[2,5,2,1],[5,3,1,1]],[4,1,[1,4,3,1],[6,4,1,2],[7,2,1,1]],[4,1,[5,3,3,1],[4,0,1,2],[5,5,1,1]],[4,16,[7,4,1,3],[4,1,1,2],[4,3,1,1]],[4,5,[7,4,1,3],[2,2,2,1],[7,3,1,1]],[4,8,[5,2,3,1],[6,5,1,2],[6,7,1,1]],[4,15,[0,5,3,1],[0,3,1,2],[4,6,1,1]],[4,12,[0,0,3,1],[0,6,1,2],[0,3,1,1]],[4,67,[2,5,3,1],[2,6,1,2],[7,0,1,1]],[4,1,[2,2,3,1],[4,7,2,1],[5,4,1,1]],[4,36,[5,5,3,1],[0,5,2,1],[0,4,1,1]],[4,6,[4,3,3,1],[0,0,1,2],[2,7,1,1]],[4,1,[5,0,3,1],[4,3,1,2],[5,1,1,1]],[4,34,[5,0,3,1],[0,6,1,2],[0,4,1,1]],[4,1,[4,2,1,3],[2,0,1,2],[7,6,1,1]],[4,2,[1,0,1,3],[7,0,1,2],[4,7,1,1]],[4,33,[1,1,1,3],[0,0,1,2],[1,0,1,1]],[4,4,[3,5,1,3],[3,0,1,2],[3,3,1,1]],[4,2,[3,6,3,1],[2,0,2,1],[2,1,1,1]],[4,1,[3,3,3,1],[0,0,1,2],[4,5,1,1]],[4,2,[4,6,3,1],[6,2,1,2],[2,3,1,1]],[4,4,[3,0,1,3],[2,6,2,1],[0,3,1,1]],[4,1,[4,4,3,1],[1,4,1,2],[0,7,1,1]],[4,4,[1,0,3,1],[4,0,2,1],[2,7,1,1]],[4,12,[0,5,3,1],[3,7,2,1],[5,3,1,1]],[4,1,[2,2,1,3],[7,6,1,2],[1,4,1,1]],[4,3,[5,2,3,1],[4,5,2,1],[7,3,1,1]],[4,4,[0,4,3,1],[5,6,1,2],[3,3,1,1]],[4,4,[4,3,1,3],[5,5,2,1],[1,3,1,1]],[4,1,[0,2,1,3],[1,2,2,1],[2,5,1,1]],[4,79,[5,0,3,1],[0,6,2,1],[0,7,1,1]],[4,6,[7,4,1,3],[3,2,1,2],[2,7,1,1]],[4,64,[2,5,1,3],[0,0,2,1],[7,7,1,1]],[4,2,[2,7,3,1],[2,0,1,2],[7,3,1,1]],[4,8,[3,4,3,1],[6,7,2,1],[0,4,1,1]],[4,57,[0,4,3,1],[2,5,1,2],[7,7,1,1]],[4,1,[0,7,3,1],[2,2,2,1],[6,4,1,1]],[4,1,[0,6,3,1],[3,4,2,1],[4,2,1,1]],[4,93,[2,5,1,3],[0,7,2,1],[7,5,1,1]],[4,6,[0,3,1,3],[1,5,2,1],[3,6,1,1]],[4,4,[3,3,3,1],[6,5,2,1],[6,4,1,1]],[4,54,[0,0,3,1],[3,6,1,2],[4,6,1,1]],[4,6,[7,0,1,3],[6,5,2,1],[2,3,1,1]],[4,1,[5,0,3,1],[3,4,1,2],[0,4,1,1]],[5,80,[0,0,1,3],[2,5,2,1],[0,3,1,1]],[5,6,[4,4,1,3],[6,4,2,1],[0,7,1,1]],[5,1,[1,5,3,1],[6,0,2,1],[5,4,1,1]],[5,1,[2,7,3,1],[0,2,2,1],[4,4,1,1]],[5,17,[0,5,1,3],[7,6,1,2],[5,2,1,1]],[5,2,[6,5,1,3],[0,5,2,1],[2,0,1,1]],[5,2,[3,1,3,1],[6,1,2,1],[3,7,1,1]],[5,2,[2,3,3,1],[0,6,1,2],[3,5,1,1]],[5,64,[7,5,1,3],[5,7,2,1],[2,4,1,1]],[5,1,[3,4,3,1],[2,5,2,1],[5,3,1,1]],[5,1,[5,2,3,1],[6,3,2,1],[2,7,1,1]],[5,2,[5,5,3,1],[2,3,1,2],[1,4,1,1]],[5,2,[1,5,1,3],[6,5,2,1],[7,2,1,1]],[5,17,[3,5,1,3],[2,4,2,1],[3,3,1,1]],[5,6,[2,5,1,3],[4,0,2,1],[1,7,1,1]],[5,2,[3,3,1,3],[1,4,2,1],[2,3,1,1]],[5,51,[3,5,1,3],[1,3,1,2],[1,2,1,1]],[5,7,[5,4,3,1],[1,4,1,2],[0,5,1,1]],[5,15,[6,5,1,3],[4,3,1,2],[7,7,1,1]],[5,1,[5,0,1,3],[1,5,1,2],[4,5,1,1]],[5,3,[2,6,3,1],[5,6,2,1],[5,3,1,1]],[5,28,[7,0,1,3],[4,3,1,2],[4,7,1,1]],[5,2,[5,0,1,3],[4,5,2,1],[7,7,1,1]],[5,7,[5,7,3,1],[3,4,2,1],[0,6,1,1]],[5,2,[0,0,1,3],[1,2,2,1],[5,6,1,1]],[5,4,[4,3,1,3],[5,6,2,1],[4,6,1,1]],[5,6,[3,5,1,3],[3,4,2,1],[7,7,1,1]],[5,2,[1,5,3,1],[6,3,1,2],[6,5,1,1]],[5,1,[5,0,3,1],[5,5,2,1],[1,5,1,1]],[5,8,[4,5,3,1],[5,4,2,1],[4,6,1,1]],[5,1,[3,5,1,3],[0,3,1,2],[1,3,1,1]],[5,1,[3,0,1,3],[2,7,2,1],[5,5,1,1]],[5,62,[1,5,1,3],[7,0,1,2],[7,2,1,1]],[5,62,[0,0,3,1],[5,6,2,1],[7,6,1,1]],[5,2,[2,3,1,3],[6,7,2,1],[3,3,1,1]],[5,8,[0,5,1,3],[7,0,1,2],[3,6,1,1]],[5,2,[1,3,1,3],[6,6,1,2],[7,7,1,1]],[5,6,[5,7,3,1],[5,4,1,2],[7,6,1,1]],[5,2,[7,5,1,3],[5,3,1,2],[1,5,1,1]],[5,2,[5,0,3,1],[0,6,1,2],[6,7,1,1]],[5,24,[2,7,3,1],[7,0,1,2],[5,7,1,1]],[5,1,[6,2,1,3],[5,6,1,2],[0,7,1,1]],[5,2,[5,7,3,1],[6,5,2,1],[3,4,1,1]],[5,1,[4,5,1,3],[4,4,2,1],[3,5,1,1]],[5,1,[6,3,1,3],[5,6,1,2],[5,5,1,1]],[5,1,[0,4,1,3],[4,6,1,2],[1,4,1,1]],[5,9,[7,5,1,3],[3,4,2,1],[2,7,1,1]],[5,2,[4,3,1,3],[1,7,2,1],[3,7,1,1]],[5,2,[0,0,1,3],[4,5,2,1],[7,6,1,1]],[5,4,[2,6,3,1],[0,0,1,2],[5,7,1,1]]];
+const MIG=[15,116,16,88,54,82,150,38,55,37,64,40,39,195,69,43,139,29,33,201,187,49,23,26,115,132,0,165,3,140,155,152,114,10,25,122,68,80,209,189,110,233,234,61,90,192,198,51,17,217,35,0,24,62,18,57,113,12,129,144,87,167,53,71,28,170,56,118,173,0,76,222,32,60,63,136,91,134,119,98,241,66,1,75,93,214,86,205,147,2,58,20,146,47,160,103,19,112,219,126,164,0,5,156,145,14,0,89,130,101,44,247,48,236,230,52,96,162,50,218,125,127,4,105,73,224,108,72,42,168,27,202,188,30,199,79,111,36,196,215,97,227,151,0,238,21,143,6,95,161,34,250,178,174,124,185,85,184,226,221,22,109,11,46,212,248,117,77,228,59,190,239,175,240,216,100,213,235,225,149,237,206,208,45,137,65,92,243,123,121,223,0,7,249,207,70,177,78,81,138,41,211,67,220,9,0,169,246,182,31,210,0,204,135,158,176,13,171,0,242,120,142,179,84,153,99,128,157,231,83,133,200,104,131,245,106,141,102,148,229,244,166,203,194,107,94,0,232,74,8]; // reto viejo (1-250) -> reto nuevo (0 = ya no existe)
+const MIG88=[2,6,10,11,12,26,27,29,30,37,38,42,44,46,47,48,50,72,73,82,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,101,113,114,115,116,117,119,120,121,122,123,124,125,127,128,129,130,131,151,152,153,154,155,156,157,158,160,161,162,163,164,165,166,167,168,169,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217];
+const $=id=>document.getElementById(id),board=$('board'),tray=$('tray'),gh=$('gh'),fl=$('fl');
+let L=1,F=1,mode='lv',rb=null,fb=null,cc=0,pcs=[],done=[],dr=null;
+try{let d=localStorage.getItem('mp4-done');
+ if(d)L=+localStorage.getItem('mp4-lv')||1;
+ else{let ids=null,o=localStorage.getItem('mp3-done'),l=+localStorage.getItem('mp3-lv')||1;
+  if(o)ids=JSON.parse(o).map(n=>MIG[n-1]);
+  else{o=localStorage.getItem('mp2-done');l=MIG88[(+localStorage.getItem('mp2-lv')||1)-1];if(o)ids=JSON.parse(o).map(n=>MIG[MIG88[n-1]-1])}
+  if(ids){done=ids.filter(Boolean);localStorage.setItem('mp4-done',JSON.stringify(done))}L=MIG[l-1]||1}
+ if(d)done=JSON.parse(d);
+ L=Math.min(250,Math.max(1,L));F=+localStorage.getItem('mp4-f')||1}catch(e){}
+let sr=0;const T=[2.276,2.574,2.841,3.156];
+const starsE=e=>{const l=Math.log10(e);return 1+(l>T[0])+(l>T[1])+(l>T[2])+(l>T[3])};
+// esfuerzo: nº medio de colocaciones que prueba un jugador "a prueba y error" (24 intentos al azar, siempre los mismos) hasta hallar una solución
+function mul(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function run(bl,rnd){const g=Array.from({length:N},()=>Array(N).fill(0));
+ for(const[x,y,w,h]of bl)for(let j=0;j<h;j++)for(let i=0;i<w;i++)g[y+j][x+i]=1;
+ const used=Array(8).fill(0);let nodes=0,found=false;
+ (function rec(k){if(found||nodes>300000)return;if(k===8){found=true;return}
+  let p=0;while(g[p>>3][p&7])p++;const y=p>>3,x=p&7;
+  const ord=[];for(let i=0;i<8;i++)if(!used[i])ord.push(i);
+  for(let i=ord.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[ord[i],ord[j]]=[ord[j],ord[i]]}
+  for(const i of ord){const a=SET[i][1],b=SET[i][2];
+   const os=a===b?[[a,b]]:rnd()<.5?[[a,b],[b,a]]:[[b,a],[a,b]];
+   for(const[w,h]of os){if(x+w>N||y+h>N)continue;
+    let ok=true;for(let j=0;j<h&&ok;j++)for(let q=0;q<w;q++)if(g[y+j][x+q]){ok=false;break}
+    if(!ok)continue;nodes++;
+    for(let j=0;j<h;j++)for(let q=0;q<w;q++)g[y+j][x+q]=1;used[i]=1;rec(k+1);
+    if(found)return;used[i]=0;for(let j=0;j<h;j++)for(let q=0;q<w;q++)g[y+j][x+q]=0}}})(0);
+ return nodes}
+function effort(bl){let sd=0;for(const b of bl)for(const v of b)sd=(sd*31+v+7)|0;const r=mul(sd);let t=0;for(let k=0;k<24;k++)t+=run(bl,r);return t/24}
+function rate(bl){cc=cnt(bl);sr=cc?starsE(effort(bl)):0}
+const list=()=>LV.map((d,i)=>i+1).filter(n=>!F||LV[n-1][0]===F);
+// --- contador de soluciones: 8 piezas de color, cada una con 2 giros, sobre lo que dejan libre las negras
+function cnt(bl){const g=Array.from({length:N},()=>Array(N).fill(0));
+ for(const[x,y,w,h]of bl)for(let j=0;j<h;j++)for(let i=0;i<w;i++){if(g[y+j][x+i])return 0;g[y+j][x+i]=1}
+ const used=Array(8).fill(0);let n=0;
+ (function rec(k){if(n>=CAP)return;if(k===8){n++;return}
+  let p=0;while(g[p>>3][p&7])p++;const y=p>>3,x=p&7;
+  for(let i=0;i<8;i++){if(used[i])continue;const a=SET[i][1],b=SET[i][2];
+   for(const[w,h]of(a===b?[[a,b]]:[[a,b],[b,a]])){if(x+w>N||y+h>N)continue;
+    let ok=true;for(let j=0;j<h&&ok;j++)for(let q=0;q<w;q++)if(g[y+j][x+q]){ok=false;break}
+    if(!ok)continue;
+    for(let j=0;j<h;j++)for(let q=0;q<w;q++)g[y+j][x+q]=1;used[i]=1;rec(k+1);used[i]=0;
+    for(let j=0;j<h;j++)for(let q=0;q<w;q++)g[y+j][x+q]=0}}})(0);
+ return n}
+function randBlacks(){for(;;){const bl=[];let ok=true;
+ for(const[a,b]of[[1,3],[1,2],[1,1]]){const r=Math.random()<.5,w=r?b:a,h=r?a:b,x=Math.floor(Math.random()*(N-w+1)),y=Math.floor(Math.random()*(N-h+1));
+  if(bl.some(q=>x<q[0]+q[2]&&q[0]<x+w&&y<q[1]+q[3]&&q[1]<y+h)){ok=false;break}bl.push([x,y,w,h])}
+ if(ok)return bl}}
+function chips(){const c=$('chips');c.innerHTML='';
+ [1,2,3,4,5].forEach(v=>{const b=document.createElement('button');b.innerHTML=v+'★<br><small>'+done.filter(n=>(LV[n-1]||[])[0]===v).length+'/50</small>';b.className=(mode==='lv'&&F===v)?'on':'';
+  b.onclick=()=>{F=v;mode='lv';hide();try{localStorage.setItem('mp4-f',F)}catch(e){}if(!list().includes(L))L=list()[0];mk()};c.appendChild(b)});
+ $('nb').className=mode==='lv'?'on':'';$('rb2').className=mode==='rnd'?'on':'';$('fb2').className=mode==='free'?'on':''}
+function blacks(){return pcs.filter(p=>p.col==='k').map(p=>[p.x,p.y,p.w,p.h])}
+function mk(){const bl=mode==='lv'?LV[L-1].slice(2):mode==='rnd'?rb:fb;
+ if(mode==='lv'){cc=LV[L-1][1];sr=LV[L-1][0]}
+ pcs=SET.map((s,i)=>{const f=i>=8,b=f?bl[i-8]:null;return{i,col:s[0],w:f?b[2]:s[1],h:f?b[3]:s[2],x:f?b[0]:null,y:f?b[1]:null,fixed:f&&mode!=='free'}});
+ if(mode==='lv')try{localStorage.setItem('mp4-lv',L)}catch(e){}
+ chips();render()}
+function newRandom(){mode='rnd';do{rb=randBlacks()}while(cnt(rb)===0);rate(rb);hist.push(rb.map(b=>b.slice()));if(hist.length>30)hist.shift();$('over').style.display='none';mk()}
+function over(h,t,b1,f1,b2,f2){$('oh').textContent=h;$('ot').textContent=t;$('o1').textContent=b1;$('o1').onclick=f1;$('o2').textContent=b2||'';$('o2').style.display=b2?'':'none';$('o2').onclick=f2;$('over').style.display='flex'}
+let shown=false,hist=[];
+function clean(){hide();pcs.forEach(p=>{if(p.col!=='k')p.x=p.y=null});render()}
+function hide(){$('over').style.display='none'}
+const cell=()=>board.clientWidth/N;
+function free(p,x,y){if(x<0||y<0||x+p.w>N||y+p.h>N)return false;
+ return pcs.every(q=>q===p||q.x===null||x>=q.x+q.w||q.x>=x+p.w||y>=q.y+q.h||q.y>=y+p.h)}
+function label(){
+ $('lv').textContent=mode==='lv'?(done.includes(L)?'✓ ':'')+'Reto '+L+'/250':mode==='rnd'?'🎲 Juego al azar':'✋ Uso libre';
+ const s=$('st');s.className=cc===0?'zero':'';
+ s.textContent=cc===0?'⚠️ 0 soluciones':'★'.repeat(sr)+'☆'.repeat(5-sr)+' · '+(cc===1?'1 solución':(cc>=CAP?CAP+'+':cc)+' soluciones')}
+function render(){
+ [...board.querySelectorAll('.p')].forEach(e=>e.remove());tray.innerHTML='';
+ const c=cell(),t=c*.42;
+ pcs.forEach(p=>{const el=document.createElement('div');el.className='p'+(p.fixed?' fx':'');el.style.background=C[p.col];
+  if(p.x!==null){Object.assign(el.style,{left:p.x*c+'px',top:p.y*c+'px',width:p.w*c+'px',height:p.h*c+'px'});board.appendChild(el)}
+  else{el.style.width=p.w*t+'px';el.style.height=p.h*t+'px';tray.appendChild(el)}
+  if(!p.fixed)el.onpointerdown=e=>down(e,p,el)});
+ label();
+ if(pcs.every(p=>p.x!==null)){
+  if(shown)return;shown=true;
+  if(mode==='lv'){if(!done.includes(L)){done.push(L);try{localStorage.setItem('mp4-done',JSON.stringify(done))}catch(e){}}label();chips();over('¡Resuelto!','','Siguiente reto',()=>step(1),'Cerrar',hide)}
+  else if(mode==='rnd')over('¡Resuelto!','','Otro al azar',newRandom);
+  else over('¡Resuelto!','','Seguir',hide,'Limpiar tablero',clean)}
+ else shown=false}
+function down(e,p,el){e.preventDefault();el.setPointerCapture(e.pointerId);dr={p,el,sx:e.clientX,sy:e.clientY,moved:false,pt:e.pointerType};
+ el.onpointermove=mv;el.onpointerup=el.onpointercancel=up}
+function mv(e){const d=dr;if(!d)return;
+ if(!d.moved){if(Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<8)return;d.moved=true;d.el.style.opacity=.3;
+  fl.style.display='block';fl.className='p';fl.style.background=C[d.p.col]}
+ const c=cell(),p=d.p,w=p.w*c,h=p.h*c,l=e.clientX-w/2,t=e.clientY-(d.pt==='touch'?h+60:h/2);
+ Object.assign(fl.style,{width:w+'px',height:h+'px',left:l+'px',top:t+'px'});
+ const r=board.getBoundingClientRect(),x=Math.round((l-r.left)/c),y=Math.round((t-r.top)/c);
+ d.t=[x,y];d.ok=free(p,x,y);
+ if(x>-2&&y>-2&&x<N&&y<N){Object.assign(gh.style,{display:'block',left:x*c+'px',top:y*c+'px',width:w+'px',height:h+'px'});gh.className=d.ok?'':'bad'}else gh.style.display='none'}
+function recount(){fb=blacks();rate(fb)}
+function up(){const d=dr;dr=null;if(!d)return;gh.style.display='none';fl.style.display='none';
+ const p=d.p;
+ if(!d.moved){
+  if(p.col==='k'){[p.w,p.h]=[p.h,p.w];if(free(p,p.x,p.y))recount();else[p.w,p.h]=[p.h,p.w]}
+  else if(p.x===null){[p.w,p.h]=[p.h,p.w]}else{p.x=p.y=null}}
+ else if(d.ok){p.x=d.t[0];p.y=d.t[1];if(p.col==='k')recount()}
+ render()}
+function step(k){hide();
+ if(mode==='rnd'){if(k>0)return newRandom();if(hist.length>1){hist.pop();rb=hist[hist.length-1].map(b=>b.slice());rate(rb);mk()}return}
+ const l=list(),i=l.indexOf(L)+k;L=l[Math.max(0,Math.min(l.length-1,i))];
+ if(mode==='free'){fb=LV[L-1].slice(2).map(b=>b.slice());rate(fb)}
+ mk()}
+$('pv').onclick=()=>step(-1);$('nx').onclick=()=>step(1);
+$('rs').onclick=()=>{hide();mk()};
+$('rb2').onclick=newRandom;$('nb').onclick=()=>{hide();mode='lv';if(!list().includes(L))L=list()[0];mk()};
+$('hb').onclick=()=>$('help').style.display='flex';$('hc').onclick=()=>$('help').style.display='none';
+$('fb2').onclick=()=>{hide();if(mode==='lv'){fb=LV[L-1].slice(2).map(b=>b.slice())}else if(mode==='rnd'){fb=rb.map(b=>b.slice())}else return;mode='free';rate(fb);mk()};
+let rbT;function rbOff(){const b=$('rb');delete b.dataset.a;b.textContent='Reiniciar retos (quitar ✓)'}
+$('rb').onclick=()=>{const b=$('rb');if(b.dataset.a){clearTimeout(rbT);done=[];try{localStorage.setItem('mp4-done','[]')}catch(e){}rbOff();label();chips()}else{b.dataset.a=1;b.textContent='¿Seguro? Toca otra vez';rbT=setTimeout(rbOff,3000)}};
+// --- mostrar solución: un solo buscador que devuelve la primera solución (solo contornos)
+const solCache={};
+function solveOne(bl){const key=JSON.stringify(bl);if(key in solCache)return solCache[key];
+ const g=Array.from({length:N},()=>Array(N).fill(0));
+ for(const[x,y,w,h]of bl)for(let j=0;j<h;j++)for(let i=0;i<w;i++){if(g[y+j][x+i])return solCache[key]=null;g[y+j][x+i]=1}
+ const used=Array(8).fill(0),pl=[];let res=null;
+ (function rec(k){if(res)return;if(k===8){res=pl.slice();return}
+  let p=0;while(g[p>>3][p&7])p++;const y=p>>3,x=p&7;
+  for(let i=0;i<8;i++){if(used[i])continue;const a=SET[i][1],b=SET[i][2];
+   for(const[w,h]of(a===b?[[a,b]]:[[a,b],[b,a]])){if(x+w>N||y+h>N)continue;
+    let ok=true;for(let j=0;j<h&&ok;j++)for(let q=0;q<w;q++)if(g[y+j][x+q]){ok=false;break}
+    if(!ok)continue;
+    for(let j=0;j<h;j++)for(let q=0;q<w;q++)g[y+j][x+q]=1;used[i]=1;pl.push([x,y,w,h]);rec(k+1);
+    if(res)return;pl.pop();used[i]=0;for(let j=0;j<h;j++)for(let q=0;q<w;q++)g[y+j][x+q]=0}}})(0);
+ return solCache[key]=res}
+function showSol(){hideSol();const sol=solveOne(blacks());if(!sol)return;
+ const c=cell(),v=document.createElement('div');v.id='sv';
+ sol.forEach(([x,y,w,h])=>{const d=document.createElement('div');Object.assign(d.style,{left:x*c+'px',top:y*c+'px',width:w*c+'px',height:h*c+'px'});v.appendChild(d)});
+ board.appendChild(v)}
+function hideSol(){const v=$('sv');if(v)v.remove()}
+// hay que mantener presionado 1 segundo (barra que se llena) para evitar toques accidentales
+let hT=null;const sb=$('sol'),sbar=$('solbar');
+function holdOn(){if(hT)return;sbar.style.transition='none';sbar.style.width='0';void sbar.offsetWidth;sbar.style.transition='width 3s linear';sbar.style.width='100%';hT=setTimeout(showSol,3000)}
+function holdOff(){clearTimeout(hT);hT=null;sbar.style.transition='none';sbar.style.width='0';hideSol()}
+sb.onpointerdown=e=>{e.preventDefault();sb.setPointerCapture(e.pointerId);holdOn()};
+sb.onpointerup=sb.onpointercancel=sb.onlostpointercapture=holdOff;sb.oncontextmenu=e=>e.preventDefault();
+addEventListener('blur',holdOff);
+// --- teclado (computadora): ← → cambian de reto, R reinicia, S (mantener) muestra la solución, Esc cierra ventanas
+addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
+ if(k==='Escape'){hide();$('help').style.display='none';return}
+ if($('help').style.display==='flex')return;
+ if(k==='ArrowLeft'){e.preventDefault();step(-1)}
+ else if(k==='ArrowRight'){e.preventDefault();step(1)}
+ else if(k==='r'||k==='R'){hide();mk()}
+ else if((k==='s'||k==='S')&&!e.repeat)holdOn()});
+addEventListener('keyup',e=>{if(e.key==='s'||e.key==='S')holdOff()});
+addEventListener('resize',render);if(!list().includes(L))L=list()[0];mk();
+</script></body></html>
